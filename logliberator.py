@@ -1,5 +1,12 @@
 #!/usr/bin/env python
 
+# This sctipt scrapes logs from qrz.com and outputs as csv.
+# It's a hack, it's my first public offering of code, it's ugly.
+# Use it, modify it, just please make sure my name is mentioned. Thanks.
+# Shawn Jones 2015 | shawnjones20@gmail.com
+
+# Log Liberator v0.1
+
 import unicodecsv
 import requests
 from bs4 import BeautifulSoup as soup
