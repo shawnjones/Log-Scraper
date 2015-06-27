@@ -12,10 +12,31 @@ import requests
 from bs4 import BeautifulSoup as soup
 from ADIF_log import ADIF_log
 
-print"**********************************************"
-print"*******     Logbook Liberator v0.1     *******"
-print"**********************************************"
-print""
+def assign_value(entry, name, value):
+    if len(value.strip()):
+        try:
+            entry[name] = value.strip()
+        except:
+            try:
+                entry[name] = value.encode('ascii', 'replace')
+            except:
+                try:
+                    del entry[name]
+                except:
+                    pass
+
+def str_or_intl(entry, name, value):
+    if len(value.strip()):
+        try:
+            entry[name] = value.strip()
+        except:
+            assign_value(entry, name+'_intl', value)
+            assign_value(entry, name, value)
+
+print("**********************************************")
+print("*******     Logbook Liberator v0.1     *******")
+print("**********************************************")
+print("")
 
 _username = raw_input("Username: ")
 _password = raw_input("Password: ")
@@ -31,16 +52,16 @@ payload = {
 	'password': _password
 	}
 
-print""
-print"Here we go. Viva la Logbook!!"
-print""
+print("")
+print("Here we go. Viva la Logbook!!")
+print("")
 	
 with requests.Session() as s:
 	p = s.post('https://www.qrz.com/login', data=payload)
 	#r = s.get('http://logbook.qrz.com')
 
 for i in range(1, _maxPages+1):
-    print"Working on page: %s" % i
+    print("Working on page: %s" % i)
     getpages = {'page': i }
     r = s.post('http://logbook.qrz.com', data=getpages)		
     data = soup(r.text)
@@ -55,65 +76,23 @@ for i in range(1, _maxPages+1):
             
         writer.writerows([sheet])
         ent = adif.newEntry()
-        if len(sheet[1].strip()):
-          try:
-            ent['qso_date'] = sheet[1].strip().replace('-','')
-          except:
-            pass
-        if len(sheet[2].strip()):
-          try:
-            ent['time_on'] = sheet[2].strip().replace(':','')
-          except:
-            pass
-        if len(sheet[3].strip()):
-          try:
-            ent['call'] = sheet[3].strip().replace(u'\xd8','0')
-          except:
-            pass
-        if len(sheet[4].strip()):
-          try:
-            ent['band'] = sheet[4].strip()
-          except:
-            pass
-        if len(sheet[5].strip()) and sheet[5].strip() != '0.000':
-          try:
-            ent['freq'] = sheet[5].strip()
-          except:
-            pass
-        if len(sheet[6].strip()):
-          try:
-            ent['mode'] = sheet[6].strip()
-          except:
-            pass
-        if len(sheet[7].strip()):
-          try:
-            ent['gridsquare'] = sheet[7].strip()
-          except:
-            pass
-        if len(sheet[9].strip()):
-          try:
-            ent['country'] = sheet[9].strip()
-          except:
-            pass
-        if len(sheet[10].strip()):
-          try:
-            ent['name'] = sheet[10].strip()
-          except:
-            pass
-        if len(sheet[11].strip()):
-          try:
-            ent['notes'] = sheet[11].strip()
-          except:
-            try:
-              ent['notes_intl'] = sheet[11].strip()
-            except:
-              pass
+        assign_value(ent, 'qso_date', sheet[1].replace('-',''))
+        assign_value(ent, 'time_on', sheet[2].replace(':',''))
+        assign_value(ent, 'call', sheet[3].replace(u'\xd8','0'))
+        assign_value(ent, 'band', sheet[4])
+        if sheet[5].strip() != '0.000':
+            assign_value(ent, 'freq', sheet[5])
+        assign_value(ent, 'mode', sheet[6])
+        assign_value(ent, 'gridsquare', sheet[7])
+        str_or_intl(ent, 'country', sheet[9])
+        str_or_intl(ent, 'name', sheet[10])
+        str_or_intl(ent, 'notes', sheet[11])
 f.close()
 
 f = open('Logbook.adf', 'w')
 f.write(str(adif))
 f.close()
 
-print""
-print"Logbook liberated!"
-print""
+print("")
+print("Logbook liberated!")
+print("")
