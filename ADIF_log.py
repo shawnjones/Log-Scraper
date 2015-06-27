@@ -1180,11 +1180,11 @@ class ADIF_logfield(object):
 		self._name = ucn
 		self(value)
 	def __repr__(self):
-		ret = '<' + str(self._name) + ':' + str(len(str(self._value)))
+		ret = '<' + str(self._name) + ':' + str(len(self._value))
 		field = self._entry.log.getType(self._name)
 		if 'type' in field:
 			ret += ':' + field['type']
-		ret += '>' + str(self._value)
+		ret += '>' + self._value
 		return ret
 	def __str__(self):
 		return str(self._value)
@@ -1192,7 +1192,7 @@ class ADIF_logfield(object):
 		return len(str(self._value))
 	def __call__(self, value):
 		validate(self._name, value, self._entry.log)
-		self._value = value
+		self._value = value.encode('utf-8')
 	def xml(self):
 		if self._name in _fieldTypes:
 			tag = escape(str(self._name))
@@ -1345,7 +1345,7 @@ class ADIF_log(list):
 		return _fieldTypes[name]['desc'] or None
 	def fimport(self, file):
 		f = open(file, 'rb')
-		data = f.read()
+		data = f.read().decode('utf-8')
 		f.close()
 		if data[0:5] == '<?xml':
 			parser = make_parser()
