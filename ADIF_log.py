@@ -970,8 +970,8 @@ _regexes = {
 	'Number': re.compile(r'^-?[0-9]+(\.[0-9]*)$'),
 	'String': re.compile(r'^[ -~]*$'),
 	'IntlString': re.compile(r'^[^\x00-\x1f]*$'),
-	'MultilineString': re.compile(r'^(?:[ -~]*(?:\r\n)?)*$'),
-	'IntlMultilineString': re.compile(r'^(?:[^\x00-\x1f]*(?:\r\n)?)*$'),
+	'MultilineString': re.compile(r'^(?:[ -~]|(?:\r\n))*$'),
+	'IntlMultilineString': re.compile(r'^(?:[^\x00-\x1f]|(?:\r\n))*$'),
 	'Maidenhead': re.compile(r'^[A-R]{2}[0-9]{2}(?:[A-X]{2}(?:[0-9]{2})?)?$', re.I),
 	'Location': re.compile(r'^[EWNS][0-9]{3} [0-9]{2}\.[0-9]{3}$'),
 }
