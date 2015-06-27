@@ -237,7 +237,7 @@ class Handler(object):
 	def Comments(self, ent, tag):
 		td = tag.find('td')
 		comment = td.next_sibling.next_sibling
-		str_or_intl(ent, 'comments', comment.text)
+		str_or_intl(ent, 'comment', comment.text)
 
 	def Notes(self, ent, tag):
 		td = tag.find('td')
