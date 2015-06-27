@@ -1,5 +1,5 @@
 # Radio Log Liberator
-Liberate your radio logs from qrz.com with the power of Python. Logliberator is a simple Python script that scrapes your data and outputs a .csv file for editing in a spreadsheet. This .csv can then be further imported/exported into various other software.
+Liberate your radio logs from qrz.com with the power of Python. Logliberator is a simple Python script that scrapes your data and outputs a .csv file for editing in a spreadsheet and a .adf file for logbook importing. This .csv can then be further imported/exported into various other software.
 
 ## Caveats
 This is really a simple hack of a script. There is a considerable room for improvement and users should use it at their own risk. I intend to keep working on this script and encourage feedback from the community. 

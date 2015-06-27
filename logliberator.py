@@ -10,6 +10,7 @@
 import unicodecsv
 import requests
 from bs4 import BeautifulSoup as soup
+from ADIF_log import ADIF_log
 
 print"**********************************************"
 print"*******     Logbook Liberator v0.1     *******"
@@ -23,6 +24,7 @@ _maxPagesStr = raw_input("Pages: ")
 _maxPages = int(_maxPagesStr)
 
 f = open('Logbook.csv', 'w')
+adif = ADIF_log("Radio Log Liberator")
 
 payload = {
 	'username': _username,
@@ -52,6 +54,64 @@ for i in range(1, _maxPages+1):
             sheet.append(x)
             
         writer.writerows([sheet])
+        ent = adif.newEntry()
+        if len(sheet[1].strip()):
+          try:
+            ent['qso_date'] = sheet[1].strip().replace('-','')
+          except:
+            pass
+        if len(sheet[2].strip()):
+          try:
+            ent['time_on'] = sheet[2].strip().replace(':','')
+          except:
+            pass
+        if len(sheet[3].strip()):
+          try:
+            ent['call'] = sheet[3].strip().replace(u'\xd8','0')
+          except:
+            pass
+        if len(sheet[4].strip()):
+          try:
+            ent['band'] = sheet[4].strip()
+          except:
+            pass
+        if len(sheet[5].strip()):
+          try:
+            ent['freq'] = sheet[5].strip()
+          except:
+            pass
+        if len(sheet[6].strip()):
+          try:
+            ent['mode'] = sheet[6].strip()
+          except:
+            pass
+        if len(sheet[7].strip()):
+          try:
+            ent['gridsquare'] = sheet[7].strip()
+          except:
+            pass
+        if len(sheet[9].strip()):
+          try:
+            ent['country'] = sheet[9].strip()
+          except:
+            pass
+        if len(sheet[10].strip()):
+          try:
+            ent['name'] = sheet[10].strip()
+          except:
+            pass
+        if len(sheet[11].strip()):
+          try:
+            ent['notes'] = sheet[11].strip()
+          except:
+            try:
+              ent['notes_intl'] = sheet[11].strip()
+            except:
+              pass
+f.close()
+
+f = open('Logbook.adf', 'w')
+f.write(str(adif))
 f.close()
 
 print""
