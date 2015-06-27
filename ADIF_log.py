@@ -967,7 +967,7 @@ _enumerations = {
 _regexes = {
 	'Date':	re.compile(r'^[0-9]{8}$'),
 	'Boolean': re.compile(r'^[YN]$'),
-	'Number': re.compile(r'^-?[0-9]+(\.[0-9]*)$'),
+	'Number': re.compile(r'^-?[0-9]+(\.[0-9]*)?$'),
 	'String': re.compile(r'^[ -~]*$'),
 	'IntlString': re.compile(r'^[^\x00-\x1f]*$'),
 	'MultilineString': re.compile(r'^(?:[ -~]|(?:\r\n))*$'),
