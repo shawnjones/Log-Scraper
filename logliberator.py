@@ -40,53 +40,6 @@ def str_or_intl(entry, name, value):
 			assign_value(entry, name+'_intl', value)
 			assign_value(entry, name, value)
 
-print("**********************************************")
-print("*******     Logbook Liberator v0.1     *******")
-print("**********************************************")
-print("")
-
-_username = raw_input("Username: ")
-_password = raw_input("Password: ")
-_bookid = raw_input("Book ID (blank for main): ")
-
-adif = ADIF_log("Radio Log Liberator")
-
-payload = {
-	'username': _username,
-	'password': _password
-	}
-
-print("")
-print("Here we go. Viva la Logbook!!")
-print("")
-
-with requests.Session() as s:
-	p = s.post('https://www.qrz.com/login', data=payload)
-	#r = s.get('http://logbook.qrz.com')
-
-try:
-	bookid = int(_bookid)
-except:
-	print('Getting Book ID')
-	r = s.post('http://logbook.qrz.com', data={'page':1})
-	data = soup(r.text)
-	bookid = data.find('input', attrs={'name':'bookid'})
-	if bookid is None:
-		print('Unable to locate book ID')
-		system.exit(1)
-	bookid = int(bookid['value'])
-
-print('Getting total QSOs')
-r = s.post('http://logbook.qrz.com', data={'bookid':bookid})
-data = soup(r.text)
-total_qsos = data.find('input', attrs={'name':'logcount'})
-if total_qsos is None:
-	print('Unable to find number of QSOs')
-	system.exit(1)
-total_qsos = int(total_qsos['value'])
-
-print('Fetching '+str(total_qsos)+' from book '+str(bookid))
-
 def get_his_mine(tag):
 	td = tag.find('td')
 	his = td.next_sibling.next_sibling
@@ -251,34 +204,79 @@ class Handler(object):
 		comment = td.next_sibling.next_sibling
 		str_or_intl(ent, 'notes', comment.text)
 
+print("**********************************************")
+print("*******     Logbook Liberator v0.1     *******")
+print("**********************************************")
+print("")
+
+_username = raw_input("Username: ")
+_password = raw_input("Password: ")
+
+payload = {
+	'username': _username,
+	'password': _password
+	}
+
+print("")
+print("Here we go. Viva la Logbook!!")
+print("")
+
+with requests.Session() as s:
+	p = s.post('https://www.qrz.com/login', data=payload)
+	#r = s.get('http://logbook.qrz.com')
+
+print('Getting Book ID(s)')
+r = s.post('http://logbook.qrz.com', data={'page':1})
+data = soup(r.text)
+bookids = []
+all_bookids = data.findAll('option', attrs={'id':re.compile('^booksel'),'value':re.compile('^[0-9]+$')})
+for id in all_bookids:
+	bookids.append(int(id['value']))
+print bookids
+
 handler = Handler()
 
-for i in range(0, total_qsos):
-	print("Working on QSO: %s" % i)
-	getpages = {'op':'show', 'bookid':bookid, 'logpos':i};
-	r = s.post('http://logbook.qrz.com', data=getpages)
-	data = soup(r.text)
-	logitem = data.find('div', id='logitem')
-	if logitem is None:
-		print('Unable to find log item for QSO '+str(i+1))
-		continue
-	rows = logitem.findAll('tr')
-	if len(rows) == 0:
-		print('Unable to find QSO details for QSO '+str(i+1))
-		continue
-	ent = adif.newEntry()
-	for j in range(0, len(rows)):
-		title = rows[j].find('td')
-		if title is None:
-			continue
-		title_text = title.text.encode('ascii','replace').strip().replace(':','').replace(' ','_')
-		if hasattr(handler, title_text):
-			getattr(handler, title_text)(ent, rows[j])
+for bookid in bookids:
+	adif = ADIF_log("Radio Log Liberator")
 
-f = open('Logbook-'+str(bookid)+'.adi', 'w')
-f.write(str(adif))
-f.close()
+	print('Getting total QSOs')
+	r = s.post('http://logbook.qrz.com', data={'bookid':bookid})
+	data = soup(r.text)
+	total_qsos = data.find('input', attrs={'name':'logcount'})
+	if total_qsos is None:
+		print('Unable to find number of QSOs')
+		system.exit(1)
+	total_qsos = int(total_qsos['value'])
+
+	print('Fetching '+str(total_qsos)+' from book '+str(bookid))
+
+	for i in range(0, total_qsos):
+		print("Working on QSO: %s" % i)
+		getpages = {'op':'show', 'bookid':bookid, 'logpos':i};
+		r = s.post('http://logbook.qrz.com', data=getpages)
+		data = soup(r.text)
+		logitem = data.find('div', id='logitem')
+		if logitem is None:
+			print('Unable to find log item for QSO '+str(i+1))
+			continue
+		rows = logitem.findAll('tr')
+		if len(rows) == 0:
+			print('Unable to find QSO details for QSO '+str(i+1))
+			continue
+		ent = adif.newEntry()
+		for j in range(0, len(rows)):
+			title = rows[j].find('td')
+			if title is None:
+				continue
+			title_text = title.text.encode('ascii','replace').strip().replace(':','').replace(' ','_')
+			if hasattr(handler, title_text):
+				getattr(handler, title_text)(ent, rows[j])
+
+	f = open('Logbook-'+str(bookid)+'.adi', 'w')
+	f.write(str(adif))
+	f.close()
 
 print("")
 print("Logbook liberated!")
 print("")
+
