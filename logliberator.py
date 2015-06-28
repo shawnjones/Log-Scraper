@@ -64,13 +64,12 @@ with requests.Session() as s:
 	p = s.post('https://www.qrz.com/login', data=payload)
 	#r = s.get('http://logbook.qrz.com')
 
-print('Fetching main page for total QSOs and book ID')
-r = s.post('http://logbook.qrz.com', data={'page':1})
-data = soup(r.text)
 try:
 	bookid = int(_bookid)
 except:
 	print('Getting Book ID')
+	r = s.post('http://logbook.qrz.com', data={'page':1})
+	data = soup(r.text)
 	bookid = data.find('input', attrs={'name':'bookid'})
 	if bookid is None:
 		print('Unable to locate book ID')
@@ -78,6 +77,8 @@ except:
 	bookid = int(bookid['value'])
 
 print('Getting total QSOs')
+r = s.post('http://logbook.qrz.com', data={'bookid':bookid})
+data = soup(r.text)
 total_qsos = data.find('input', attrs={'name':'logcount'})
 if total_qsos is None:
 	print('Unable to find number of QSOs')
@@ -274,7 +275,7 @@ for i in range(0, total_qsos):
 		if hasattr(handler, title_text):
 			getattr(handler, title_text)(ent, rows[j])
 
-f = open('Logbook.adi', 'w')
+f = open('Logbook-'+str(bookid)+'.adi', 'w')
 f.write(str(adif))
 f.close()
 
