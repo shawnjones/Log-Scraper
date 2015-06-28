@@ -47,6 +47,7 @@ print("")
 
 _username = raw_input("Username: ")
 _password = raw_input("Password: ")
+_bookid = raw_input("Book ID (blank for main): ")
 
 adif = ADIF_log("Radio Log Liberator")
 
@@ -63,15 +64,20 @@ with requests.Session() as s:
 	p = s.post('https://www.qrz.com/login', data=payload)
 	#r = s.get('http://logbook.qrz.com')
 
-print('Getting Book ID and number of QSOs')
+print('Fetching main page for total QSOs and book ID')
 r = s.post('http://logbook.qrz.com', data={'page':1})
 data = soup(r.text)
-bookid = data.find('input', attrs={'name':'bookid'})
-if bookid is None:
-	print('Unable to locate book ID')
-	system.exit(1)
-bookid = int(bookid['value'])
+try:
+	bookid = int(_bookid)
+except:
+	print('Getting Book ID')
+	bookid = data.find('input', attrs={'name':'bookid'})
+	if bookid is None:
+		print('Unable to locate book ID')
+		system.exit(1)
+	bookid = int(bookid['value'])
 
+print('Getting total QSOs')
 total_qsos = data.find('input', attrs={'name':'logcount'})
 if total_qsos is None:
 	print('Unable to find number of QSOs')
