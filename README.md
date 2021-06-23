@@ -17,5 +17,5 @@ If you find this script useful, please drop me a line and let me know that it wo
 
 
 ## Contributing
-Making improvements is encouraged. If you just have an idea or comment, I welcome those as well. This script is released for the amateur radio community as a whole, if you find it useful drop me a message and let me know. I encourage anyone to contact me at shawnjones20@gmail.com if you have any questions. 
+Making improvements is encouraged. If you just have an idea or comment, I welcome those as well. This script is released for the amateur radio community as a whole, if you find it useful drop me a message and let me know.
 
