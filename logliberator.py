@@ -40,21 +40,18 @@ def str_or_intl(entry, name, value):
 			assign_value(entry, name+'_intl', value)
 			assign_value(entry, name, value)
 
-def get_his_mine(tag):
-	td = tag.find('td')
-	his = td.next_sibling.next_sibling
-	mine = his.next_sibling.next_sibling
-	return {'his':his, 'mine':mine}
+def get_tds(tag):
+	return tag.findAll('td')
 
 class Handler(object):
 	def Serial(self, ent, tag):
-		ld = tag.find('span', text='Log Date:')
+		ld = tag.find('th', text='Log Date')
 		ld = ld.next_sibling.next_sibling
 		ld = ld.text[0:10].replace('-','')
 		assign_value(ent, 'QRZCOM_QSO_UPLOAD_DATE', ld)
 
 	def QSO_Start(self, ent, tag):
-		qs = tag.find('td')
+		qs = tag.find('th')
 		qs = qs.next_sibling.next_sibling
 		qsd = qs.text[0:10].replace('-','')
 		qst = qs.text[11:19].replace(':','')
@@ -63,7 +60,7 @@ class Handler(object):
 		# TODO: QRZ Confirmation...
 
 	def QSO_End(self, ent, tag):
-		qe = tag.find('td')
+		qe = tag.find('th')
 		qe = qe.next_sibling.next_sibling
 		contest = qe.next_sibling.next_sibling
 		qed = qe.text[0:10].replace('-','')
@@ -76,62 +73,62 @@ class Handler(object):
 	# TODO: Section
 
 	def Station(self, ent, tag):
-		st = get_his_mine(tag)
-		assign_call(ent, 'call', st['his'].text)
-		assign_call(ent, 'operator', st['mine'].text)
+		his, mine = get_tds(tag)
+		assign_call(ent, 'call', his.text)
+		assign_call(ent, 'operator', mine.text)
 
 	def Op(self, ent, tag):
-		op = get_his_mine(tag)
-		str_or_intl(ent, 'name', op['his'].text)
-		str_or_intl(ent, 'my_name', op['mine'].text)
+		his, mine = get_tds(tag)
+		str_or_intl(ent, 'name', his.text)
+		str_or_intl(ent, 'my_name', mine.text)
 
 	def QTH(self, ent, tag):
-		qth = get_his_mine(tag)
-		str_or_intl(ent, 'qth', qth['his'].text)
-		str_or_intl(ent, 'my_city', qth['mine'].text)
+		his, mine = get_tds(tag)
+		str_or_intl(ent, 'qth', his.text)
+		str_or_intl(ent, 'my_city', mine.text)
 
 	def State(self, ent, tag):
-		st = get_his_mine(tag)
-		assign_value(ent, 'state', st['his'].text);
-		assign_value(ent, 'my_state', st['mine'].text);
+		his, mine = get_tds(tag)
+		assign_value(ent, 'state', his.text);
+		assign_value(ent, 'my_state', mine.text);
 
 	def Country(self, ent, tag):
-		cnt = get_his_mine(tag)
-		assign_value(ent, 'country', cnt['his'].text);
-		assign_value(ent, 'my_country', cnt['mine'].text);
+		his, mine = get_tds(tag)
+		assign_value(ent, 'country', his.text);
+		assign_value(ent, 'my_country', mine.text);
 
-	def Band(self, ent, tag):
-		b = get_his_mine(tag)
-		band = b['his'].contents[0]
-		freq = band.next_sibling.next_sibling
-		mode = freq.next_sibling.next_sibling
+	def Frequency(self, ent, tag):
+		his_freq_band, his_mode, my_freq_band, my_mode  = get_tds(tag)
+		freq = his_freq_band.contents[0]
+		band = freq.next_sibling.text.upper()
+		mode = his_mode.text
 		assign_value(ent, 'band', band)
 		assign_value(ent, 'freq', freq.replace(' MHz', ''))
 		assign_value(ent, 'mode', mode)
-		my_band = b['mine'].contents[0]
-		my_freq = band.next_sibling.next_sibling
+		my_freq = my_freq_band.contents[0]
+		my_band = freq.next_sibling.text.upper()
+		my_mode = his_mode.text
 		if (my_band != band):
 			assign_value(ent, 'band_rx', my_band)
 		if (my_freq != freq):
 			assign_value(ent, 'freq_rx', my_freq.replace(' MHz', ''))
 
 	def Power(self, ent, tag):
-		p = get_his_mine(tag)
-		po = p['his'].contents[0]
-		rst = po.next_sibling.next_sibling
+		his_po, rst_r, my_po, rst_s  = get_tds(tag)
+		po = his_po.text
+		rst = rst_r.text
 		if int(po.replace(' W','')) > 0:
 			assign_value(ent, 'rx_pwr', po.replace(' W', ''))
 		assign_value(ent, 'rst_rcvd', rst)
-		po = p['mine'].contents[0]
-		rst = po.next_sibling.next_sibling
+		po = my_po.text
+		rst = rst_s.text
 		if int(po.replace(' W','')) > 0:
 			assign_value(ent, 'tx_pwr', po.replace(' W', ''))
 		assign_value(ent, 'rst_sent', rst)
 
-	def Coords(self, ent, tag):
-		coords = get_his_mine(tag)
-		lat = coords['his'].contents[2]
-		lon = coords['his'].contents[4]
+	def Coordinates(self, ent, tag):
+		his, mine = get_tds(tag)
+		lat, lon = his.text.split(',')
 		latm = re.search('([0-9]+)\.([0-9]+) ([NS])', lat)
 		if latm is not None:
 			mins = float('0.'+latm.group(2))*60
@@ -140,8 +137,7 @@ class Handler(object):
 		if lonm is not None:
 			mins = float('0.'+lonm.group(2))*60
 			assign_value(ent, 'lon', lonm.group(3)+'%03u %#06.3f' % (int(lonm.group(1)), mins))
-		lat = coords['mine'].contents[2]
-		lon = coords['mine'].contents[4]
+		lat, lon = mine.text.split(',')
 		latm = re.search('([0-9]+)\.([0-9]+) ([NS])', lat)
 		if latm is not None:
 			mins = float('0.'+latm.group(2))*60
@@ -152,15 +148,15 @@ class Handler(object):
 			assign_value(ent, 'my_lon', lonm.group(3)+'%03u %#06.3f' % (int(lonm.group(1)), mins))
 
 	def Grid(self, ent, tag):
-		gr = get_his_mine(tag)
-		grid = gr['his'].contents[0]
-		dist = gr['his'].contents[2]
+		his_grid, dist, my_grid, my_bear = get_tds(tag)
+		grid = his_grid.text
+		dist = dist.text
 		assign_value(ent, 'gridsquare', grid)
 		km = re.search('([0-9]+) km', dist)
 		if km is not None and int(km.group(1)) > 0:
 			assign_value(ent, 'distance', km.group(1))
-		grid = gr['mine'].contents[0]
-		bear = gr['mine'].contents[4]
+		grid = my_grid.text
+		bear = my_bear.text
 		assign_value(ent, 'my_gridsquare', grid)
 		deg = re.search('([0-9]+)\xb0', bear)
 		if deg is not None:
@@ -169,39 +165,37 @@ class Handler(object):
 	# TODO: County
 
 	def Continent(self, ent, tag):
-		cont = get_his_mine(tag)
-		ct = cont['his'].contents[0].strip()[0:2]
+		his_ct, his_iota, my_ct, my_iota = get_tds(tag)
+		ct = his_ct.text.strip()[0:2]
 		assign_value(ent, 'cont', ct)
-		cqz = re.search('[0-9]+', cont['his'].contents[2])
+		assign_value(ent, 'iota', his_iota.text)
+		assign_value(ent, 'my_iota', my_iota.text)
+
+	def Zones(self, ent, tag):
+		his_ituz, his_cqz, my_ituz, my_cqz = get_tds(tag)
+		assign_value(ent, 'ituz', his_ituz.text)
+		cqz = re.search('[0-9]+', his_cqz.text)
 		if cqz is not None:
 			assign_value(ent, 'cqz', cqz.group(0))
-		cqz = re.search('[0-9]+', cont['mine'].contents[2])
+		assign_value(ent, 'my_itu_zone', my_ituz.text)
+		cqz = re.search('[0-9]+', my_cqz.text)
 		if cqz is not None:
 			assign_value(ent, 'my_cq_zone', cqz.group(0))
 
-	def ITU_Zone(self, ent, tag):
-		iz = get_his_mine(tag)
-		assign_value(ent, 'ituz', iz['his'].contents[0])
-		assign_value(ent, 'iota', iz['his'].contents[2])
-		assign_value(ent, 'my_itu_zone', iz['mine'].contents[0])
-		assign_value(ent, 'my_iota', iz['mine'].contents[2])
-
 	def QSL_Via(self, ent, tag):
-		qsl = get_his_mine(tag)
-		assign_value(ent, 'qsl_via', qsl['his'].contents[0])
+		his, mine = get_tds(tag)
+		assign_value(ent, 'qsl_via', his.text)
 
 	# TODO: QSL_Card
 	# TODO: eQSL
 	# TODO: LoTW
 
 	def Comments(self, ent, tag):
-		td = tag.find('td')
-		comment = td.next_sibling.next_sibling
+		comment = tag.find('td')
 		str_or_intl(ent, 'comment', comment.text)
 
 	def Notes(self, ent, tag):
-		td = tag.find('td')
-		comment = td.next_sibling.next_sibling
+		comment = tag.find('td')
 		str_or_intl(ent, 'notes', comment.text)
 
 print("**********************************************")
@@ -255,7 +249,7 @@ for bookid in bookids:
 		getpages = {'op':'show', 'bookid':bookid, 'logpos':i};
 		r = s.post('http://logbook.qrz.com', data=getpages)
 		data = soup(r.text)
-		logitem = data.find('div', id='logitem')
+		logitem = data.find('div', id='lbrecord')
 		if logitem is None:
 			print('Unable to find log item for QSO '+str(i+1))
 			continue
@@ -265,7 +259,7 @@ for bookid in bookids:
 			continue
 		ent = adif.newEntry()
 		for j in range(0, len(rows)):
-			title = rows[j].find('td')
+			title = rows[j].find('th')
 			if title is None:
 				continue
 			title_text = title.text.encode('ascii','replace').strip().replace(':','').replace(' ','_')
